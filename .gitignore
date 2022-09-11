@@ -10,7 +10,7 @@
 *.xlsx
 *.rpm
 *.tar.gz
-
+*.log
 # Test binary, built with `go test -c`
 *.test
 
