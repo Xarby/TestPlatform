@@ -5,13 +5,24 @@ import (
 	"TestPlatform/Routes/Devices"
 	"TestPlatform/Routes/DialingTest"
 	"TestPlatform/Routes/InstallZddi"
+	"TestPlatform/Struct"
 	"TestPlatform/Util"
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"log"
 )
 func main()  {
 
 
 	Util.InitLog()
+	db, open_db_err := gorm.Open(sqlite.Open(Const.DevicesInfoRootSqlPath), &gorm.Config{})
+	if open_db_err!=nil {
+		log.Println("open db file", open_db_err)
+		return
+	}
+	db.AutoMigrate(Struct.SshStruct{})
+	db.AutoMigrate(Struct.DevInfoStruct{})
 
 	r := gin.Default()
 	install_zddi := r.Group("/install_zddi")
