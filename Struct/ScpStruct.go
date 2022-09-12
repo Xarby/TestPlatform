@@ -155,7 +155,7 @@ func (dev *ScpStruct) InstallZddi(zddi_path string, build_path string, dns_versi
 
 	//3.15||3.16版本处理方式
 	if strings.Contains(build_path, "3.13") || strings.Contains(build_path, "3.14") || strings.Contains(build_path, "3.15") || strings.Contains(build_path, "3.16") {
-		dev.Exec(ssh_client,fmt.Sprintf("publisher -c license -p /etc/pub.key -q /etc/pri.key -i /etc/machine.info -l /etc/license.file -N %s -H %s -A %s -m 0", dns_version, dhcp_version, add_version))
+		dev.Exec(ssh_client,fmt.Sprintf("publisher -c license -p /etc/pub.key -q /etc/pri.key -i /etc/machine.info -l /etc/license.file -N %d -H %d -A %d -m 0", dns_version, dhcp_version, add_version))
 		dev.Exec(ssh_client,"sed -i '/release/d' /etc/rc.d/rc.local")
 		dev.Exec(ssh_client,fmt.Sprintf("sed -i '/CLISH_PATH/a /usr/local/appsys/normal/package/zdns_startmgr/zdns_startmgr_ctl release /root/zddi %s' /etc/rc.d/rc.local", role))
 		dev.Exec(ssh_client,"nohup /etc/rc.local &")
@@ -164,7 +164,7 @@ func (dev *ScpStruct) InstallZddi(zddi_path string, build_path string, dns_versi
 		dev.Exec(ssh_client,"service  sshd restart")
 		//3.10||3.11||3.13||3.14版本处理方式
 	} else if strings.Contains(build_path, "3.10") || strings.Contains(build_path, "3.11") {
-		dev.Exec(ssh_client,fmt.Sprintf("publisher -c license -p /etc/pub.key -q /etc/pri.key -i /etc/machine.info -l /etc/license.file -N %s -H %s -A %s -R 1 -m 0", dns_version, dhcp_version, add_version))
+		dev.Exec(ssh_client,fmt.Sprintf("publisher -c license -p /etc/pub.key -q /etc/pri.key -i /etc/machine.info -l /etc/license.file -N %d -H %d -A %d -R 1 -m 0", dns_version, dhcp_version, add_version))
 		dev.Exec(ssh_client,fmt.Sprintf("sed -i 's#^lurker.*#lurker -c run -d /root/zddi -r %s -p /etc/pub.key -l /etc/license.file#g'  /etc/rc.d/rc.local", role))
 		dev.Exec(ssh_client,"nohup /etc/rc.local &")
 	}

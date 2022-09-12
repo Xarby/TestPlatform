@@ -26,13 +26,13 @@ func (ftp_task FtpTask) CheckFtpTask() (string, error) {
 	if ip == nil {
 		return ftp_task.Ftp.Ipaddr + " illegal!", errors.New(ftp_task.Ftp.Ipaddr + " illegal!")
 	}
-	if ftp_task.DnsVersion > 4 || ftp_task.DnsVersion < 0 {
+	if ftp_task.DnsVersion >= 4 || ftp_task.DnsVersion < 0 {
 		return "dns version input limit 0-3", errors.New("dns version input limit 0-3")
 	}
-	if ftp_task.AddVersion > 3 || ftp_task.AddVersion < 0 {
+	if ftp_task.AddVersion >= 3 || ftp_task.AddVersion < 0 {
 		return "add version input limit 0-2", errors.New("add version input limit 0-2")
 	}
-	if ftp_task.DhcpVersion > 2 || ftp_task.DhcpVersion < 0 {
+	if ftp_task.DhcpVersion >= 2 || ftp_task.DhcpVersion < 0 {
 		return "dhcp version input limit 0-1", errors.New("dhcp version input limit 0-1")
 	}
 
@@ -78,13 +78,13 @@ type ScpTask struct {
 
 func (scp_task ScpTask) CheckScpTask() (string, error) {
 
-	if scp_task.DnsVersion >= 4 || scp_task.DnsVersion <= -1 {
+	if scp_task.DnsVersion >= 4 || scp_task.DnsVersion < 0{
 		return "dns version input limit 0-3", errors.New("dns version input limit 0-3")
 	}
-	if scp_task.AddVersion >= 3 || scp_task.AddVersion <= -1 {
+	if scp_task.AddVersion >= 3 || scp_task.AddVersion < 0 {
 		return "add version input limit 0-2", errors.New("add version input limit 0-2")
 	}
-	if scp_task.DhcpVersion >= 2 || scp_task.DhcpVersion <= -1 {
+	if scp_task.DhcpVersion >= 2 || scp_task.DhcpVersion < 0 {
 		return "dhcp version input limit 0-1", errors.New("dhcp version input limit 0-1")
 	}
 
@@ -106,7 +106,11 @@ func (scp_task ScpTask) CheckScpTask() (string, error) {
 
 func check_scp_file_exist(scp_dev ScpStruct) (string, error) {
 	scp_conn, conn_scp_err := scp_dev.Conn()
-	defer scp_conn.Close()
+	defer func() {
+		if scp_conn != nil {
+			scp_conn.Close()
+		}
+	}()
 	if conn_scp_err != nil {
 		return "conn fail zddi " + scp_dev.Ipaddr, conn_scp_err
 	} else {

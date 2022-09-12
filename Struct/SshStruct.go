@@ -29,7 +29,7 @@ func (dev *SshStruct) Conn() (*ssh.Client, error){
 	config.Auth = []ssh.AuthMethod{ssh.Password(dev.Password)}
 	client, err := ssh.Dial("tcp", dev.Ipaddr+":"+dev.Port, config)
 	if err != nil {
-		log.Println("conn devices " + dev.Ipaddr + "err " + err.Error())
+		log.Println("conn devices " + dev.Ipaddr + " err " + err.Error())
 		return nil,err
 	} else {
 		log.Println("conn devices " + dev.Ipaddr + " succ")
@@ -42,7 +42,6 @@ func (ssh_dev *SshStruct) Exec(client *ssh.Client,cmd string) (string, error) {
 	if net_session_err != nil {
 		return "",net_session_err
 	}
-
 	result_exec, exe_err := session.CombinedOutput(cmd)
 	if exe_err != nil {
 		log.Println(exe_err)

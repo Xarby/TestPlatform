@@ -11,9 +11,8 @@ func InstallScpZddiTask(task *Struct.ScpTask) (string,error) {
 	Util.PrintJson(task)
 
 	check_info,check_err := task.CheckScpTask()
+	log.Println(check_info)
 	if check_err == nil {
-		log.Println(check_info)
-
 		//获取文件名字
 		zddi_file_name := Util.GetFileName(task.GetScpZddi.Path)
 		build_file_name := Util.GetFileName(task.GetScpBuild.Path)
