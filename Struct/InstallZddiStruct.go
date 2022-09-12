@@ -36,6 +36,12 @@ func (ftp_task FtpTask) CheckFtpTask() (string, error) {
 		return "dhcp version input limit 0-1", errors.New("dhcp version input limit 0-1")
 	}
 
+	for _, scp_struct := range ftp_task.ZddiDevices {
+		if check_inio,check_err :=check_task_role(scp_struct);check_err!=nil{
+			return check_inio,check_err
+		}
+	}
+
 	url := ftp_task.Ftp.Ipaddr + ":" + ftp_task.Ftp.Port
 	ftp_client, conn_err := ftp.Dial(url, ftp.DialWithTimeout(5*time.Second))
 	if conn_err != nil {
@@ -78,7 +84,7 @@ type ScpTask struct {
 
 func (scp_task ScpTask) CheckScpTask() (string, error) {
 
-	if scp_task.DnsVersion >= 4 || scp_task.DnsVersion < 0{
+	if scp_task.DnsVersion >= 4 || scp_task.DnsVersion < 0 {
 		return "dns version input limit 0-3", errors.New("dns version input limit 0-3")
 	}
 	if scp_task.AddVersion >= 3 || scp_task.AddVersion < 0 {
@@ -86,6 +92,12 @@ func (scp_task ScpTask) CheckScpTask() (string, error) {
 	}
 	if scp_task.DhcpVersion >= 2 || scp_task.DhcpVersion < 0 {
 		return "dhcp version input limit 0-1", errors.New("dhcp version input limit 0-1")
+	}
+
+	for _, scp_struct := range scp_task.ZddiDevices {
+		if check_inio,check_err :=check_task_role(scp_struct);check_err!=nil{
+			return check_inio,check_err
+		}
 	}
 
 	//检查远端是否有build包
@@ -122,4 +134,12 @@ func check_scp_file_exist(scp_dev ScpStruct) (string, error) {
 		}
 	}
 	return "file" + scp_dev.Path + " exist", nil
+}
+
+func check_task_role(scp_struct ScpStruct) (string, error) {
+	if scp_struct.Role != "master" && scp_struct.Role != "slave" && scp_struct.Role != "backup" {
+		return scp_struct.Ipaddr + " role: '" + scp_struct.Role + "' not in master/slave/backup", errors.New("not in master/slave/backup")
+	}else {
+		return "check role succ:"+scp_struct.Ipaddr + " role: '" + scp_struct.Role,nil
+	}
 }
