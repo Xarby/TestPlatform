@@ -14,7 +14,6 @@ func ScpInstallZddi(context *gin.Context) {
 		log.Println(err)
 		context.SecureJSON(http.StatusInternalServerError, err)
 	}else {
-		go InstallZddi.InstallScpZddiTask(&scp_task)
-		context.JSON(http.StatusOK, scp_task)
+		context.JSON(http.StatusOK, InstallZddi.InstallScpZddiTask(&scp_task))
 	}
 }

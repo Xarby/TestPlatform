@@ -96,7 +96,7 @@ func (scp_dev *SshStruct) GetFile(local string, remote string) error {
 
 
 //zddi_path string, build_path string, dns_version string, add_version string, dhcp_version string, role string
-func (dev *ScpStruct) InstallZddi(zddi_path string, build_path string, dns_version string, add_version string, dhcp_version string, role string) error {
+func (dev *ScpStruct) InstallZddi(zddi_path string, build_path string, dns_version int, add_version int, dhcp_version int, role string) error {
 
 	local_zddi_file_name := Const.ZddiFileMenuName + zddi_path
 	local_build_file_name := Const.ZddiFileMenuName + build_path
