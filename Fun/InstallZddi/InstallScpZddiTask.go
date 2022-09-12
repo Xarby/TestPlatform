@@ -33,5 +33,5 @@ func InstallScpZddiTask(task *Struct.ScpTask) (string,error) {
 			}(zddi_device)
 		}
 	}
-	return check_info,nil
+	return check_info,check_err
 }
