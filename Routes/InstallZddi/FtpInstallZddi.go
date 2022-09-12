@@ -14,6 +14,7 @@ func FtpInstallZddi(context *gin.Context) {
 		log.Println(err)
 		context.SecureJSON(http.StatusInternalServerError, err)
 	} else {
-		context.JSON(http.StatusOK, InstallZddi.InstallFtpZddiTask(&ftp_task))
+		task_exe_info,_ := InstallZddi.InstallFtpZddiTask(&ftp_task)
+		context.JSON(http.StatusOK, map[string]interface{}{"exe_info":task_exe_info})
 	}
 }

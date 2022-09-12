@@ -5,24 +5,26 @@ import (
 	"TestPlatform/Struct"
 	"TestPlatform/Util"
 	"log"
+	"os"
 )
 
-func InstallFtpZddiTask(task *Struct.FtpTask) string {
+func InstallFtpZddiTask(task *Struct.FtpTask) (string, error) {
 	//打印任务
 	Util.PrintJson(task)
-	check_flag, check_info := task.CheckFtpTask()
-	if check_flag {
+	check_info, check_err := task.CheckFtpTask()
+	if check_err == nil {
 		zddi_file_name := Util.GetFileName(task.ZddiPath)
 		build_file_name := Util.GetFileName(task.BuildPath)
 		local_zddi_file_name := Const.ZddiFileMenuName + zddi_file_name
 		local_build_file_name := Const.ZddiFileMenuName + build_file_name
 		//获取文件
-		if Util.CheckZddiFile(task.ZddiPath) != true {
+
+		if _, open_err := os.Stat(Const.ZddiFileMenuName + zddi_file_name); open_err != nil {
 			task.Ftp.GetFtpFile(task.ZddiPath)
 		} else {
 			log.Println("Is exist file " + local_zddi_file_name + ", skip get file")
 		}
-		if Util.CheckZddiFile(task.BuildPath) != true {
+		if _, open_err := os.Stat(Const.ZddiFileMenuName + build_file_name); open_err != nil {
 			task.Ftp.GetFtpFile(task.BuildPath)
 		} else {
 			log.Println("Is exist file " + local_build_file_name + ", skip get file")
@@ -35,5 +37,5 @@ func InstallFtpZddiTask(task *Struct.FtpTask) string {
 			}(zddi_device)
 		}
 	}
-	return check_info
+	return check_info, check_err
 }

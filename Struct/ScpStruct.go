@@ -66,29 +66,23 @@ func (scp_dev *SshStruct) GetFile(local string, remote string) error {
 	//判断是本地是否存在文件
 	if err != nil {
 		defer scpclient.Close()
-		//判断远程是否存在文件
+		//连接
 		client , connErr :=scp_dev.Conn()
 		if connErr != nil{
 			return connErr
 		}
 		defer client.Close()
-		_ ,file_err:=scp_dev.Exec(client,"ls "+remote)
-		//远端有文件
-		if file_err == nil{
-			srcFile, open_file_err := os.OpenFile(local, os.O_RDWR|os.O_CREATE, 0755)
-			if open_file_err != nil {
-				log.Println("open file " + local + " fail")
-			}
-			log.Println("start pull remote file： " + remote + " to " + local + " ...")
-			if get_file_err := scpclient.CopyFromRemote(context.Background(), srcFile, remote); get_file_err != nil {
-				log.Println("push err ...", get_file_err)
-				return get_file_err
-			}
-			log.Println("push ok ...")
-		}else {
-			log.Println("remote not exist file:"+remote+" task stop ")
-			return file_err
+		//下载文件
+		srcFile, open_file_err := os.OpenFile(local, os.O_RDWR|os.O_CREATE, 0755)
+		if open_file_err != nil {
+			log.Println("open file " + local + " fail")
 		}
+		log.Println("start pull remote file： " + remote + " to " + local + " ...")
+		if get_file_err := scpclient.CopyFromRemote(context.Background(), srcFile, remote); get_file_err != nil {
+			log.Println("push err ...", get_file_err)
+			return get_file_err
+		}
+		log.Println("push ok ...")
 	}
 	return nil
 }
@@ -112,7 +106,6 @@ func (dev *ScpStruct) InstallZddi(zddi_path string, build_path string, dns_versi
 
 	remote_zddi_md5, get_zddi_md5_err := dev.Exec(ssh_client,"md5sum " + remote_zddi_file_name)
 	local_zddi_md5, _ := Util.GetFileMd5(local_zddi_file_name)
-
 
 	if get_zddi_md5_err == nil {
 		if (strings.Contains(remote_zddi_md5,local_zddi_md5) == false){
