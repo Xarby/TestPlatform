@@ -14,7 +14,7 @@ func DigDoamin(ipaddr string, domain string, domain_type string) ([]string) {
 	var err error
 	if runtime.GOOS == "linux" {
 		fmt.Println("/usr/bin/dig"+"@"+ipaddr+ domain+ domain_type+ "+short")
-		out, err = exec.Command("/bin/bash", "dig", "@"+ipaddr, domain, domain_type, "+short").Output()
+		out, err = exec.Command("dig", "@"+ipaddr, domain, domain_type, "+short").Output()
 	} else if runtime.GOOS == "windows" {
 		out, err = exec.Command("cmd.exe","/c", "dig", "@"+ipaddr, domain, domain_type, "+short").Output()
 	}
