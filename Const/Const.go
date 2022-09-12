@@ -12,7 +12,6 @@ const ZddiPrivateMenuName = "File/Private/"
 const DevicesInfoMenuName = "File/Devices/"
 
 //设备设备信息文件存放路径
-const DevicesInfoRootFileName = DevicesInfoMenuName+"devices_info/Devices.json"
 const DevicesInfoRootSqlPath = DevicesInfoMenuName+"Devices.db"
 //put远程目录
 const ZddiRemoteFilePath = "/root/"

@@ -18,7 +18,6 @@ func GetDevicesInfo() string {
 		log.Println(open_sqlite_err)
 	}
 
-
 	db.Find(&Struct.SshStruct{}, " ipaddr = '10.1.111.64'")
 	fmt.Println(db.Find(&Struct.SshStruct{}, "ipaddr", "10.1.111.63").RowsAffected)
 	fmt.Println(db.Find(&Struct.SshStruct{}, "ipaddr", "10.1.111.64").RowsAffected)

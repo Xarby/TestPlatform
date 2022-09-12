@@ -35,7 +35,6 @@ func (ftpStruct *FtpStruct)GetFtpFile( ftpFilePath string) map[string]any {
 	}
 	file_name := Util.GetFileName(ftpFilePath)
 
-	Util.CheckZddiFileMenu()
 	outFile, out_file_err := os.Create(Const.ZddiFileMenuName + file_name)
 	defer outFile.Close()
 	if out_file_err != nil {

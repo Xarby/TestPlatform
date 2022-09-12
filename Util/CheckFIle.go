@@ -16,10 +16,3 @@ func CheckZddiFile(zddi_file_path string)  bool {
 		return true
 	}
 }
-
-func CheckZddiFileMenu()  {
-	if _,err :=os.Stat(Const.ZddiFileMenuName);err != nil{
-		log.Println("create Path:"+Const.ZddiFileMenuName+"file ")
-		os.MkdirAll(Const.ZddiFileMenuName,0777)
-	}
-}

@@ -62,9 +62,6 @@ func (scp_dev *SshStruct) GetFile(local string, remote string) error {
 	if new_client_err != nil {
 		log.Println("ssh change scp fail")
 	}
-	if _, err := os.Stat(Const.ZddiFileMenuName); err != nil {
-		os.MkdirAll(Const.ZddiFileMenuName, 0665)
-	}
 	_, err := os.Stat(local)
 	//判断是本地是否存在文件
 	if err != nil {
