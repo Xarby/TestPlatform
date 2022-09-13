@@ -12,12 +12,12 @@ import (
 	"gorm.io/gorm"
 	"log"
 )
-func main()  {
 
+func main() {
 
 	Util.InitLog()
 	db, open_db_err := gorm.Open(sqlite.Open(Const.DevicesInfoRootSqlPath), &gorm.Config{})
-	if open_db_err!=nil {
+	if open_db_err != nil {
 		log.Println("open db file", open_db_err)
 		return
 	}
@@ -38,10 +38,10 @@ func main()  {
 		device.PUT("/put_dev", Devices.PutDevice)
 		device.DELETE("/del_dev", Devices.DelDevice)
 	}
-	dialing_test:= r.Group("/dialing_test")
+	dialing_test := r.Group("/dialing_test")
 	{
-		dialing_test.POST("/create_task",DialingTest.CreateTask)
+		dialing_test.POST("/create_task", DialingTest.CreateTask)
 	}
 
-	r.Run(":"+Const.RunPort)
+	r.Run("0.0.0.0" + ":" + Const.RunPort)
 }

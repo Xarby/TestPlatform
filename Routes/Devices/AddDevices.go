@@ -23,7 +23,6 @@ func AddDevice(context *gin.Context) {
 		if open_db_err!=nil {
 			log.Println("open db file", err)
 		}
-		db.AutoMigrate(Struct.SshStruct{})
 		for _, v := range devs.Devices {
 			add_dev := db.First(&Struct.SshStruct{},"ipaddr",v.Ipaddr)
 			if (add_dev.RowsAffected) == 1{

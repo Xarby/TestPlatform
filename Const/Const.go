@@ -27,3 +27,7 @@ const WorkLogPath = LogPath+"work.log"
 
 //拨测生成表格列表
 const DialingTestFilePath  = "File/DialingTest/"
+
+const ZddiApiDefaultUser = "admin"
+
+const ZddiApiDefaultPasswd = "admin"

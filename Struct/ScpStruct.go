@@ -170,4 +170,3 @@ func (dev *ScpStruct) InstallZddi(zddi_path string, build_path string, dns_versi
 	}
 	return nil
 }
-
