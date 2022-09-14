@@ -6,12 +6,14 @@ import (
 	"TestPlatform/Util"
 	"log"
 	"os"
+	"sync"
 )
 
 func InstallFtpZddiTask(task *Struct.FtpTask) (string, error) {
 	//打印任务
 	Util.PrintJson(task)
 	check_info, check_err := task.CheckFtpTask()
+	wg := sync.WaitGroup{}
 	if check_err == nil {
 		zddi_file_name := Util.GetFileName(task.ZddiPath)
 		build_file_name := Util.GetFileName(task.BuildPath)
@@ -31,12 +33,16 @@ func InstallFtpZddiTask(task *Struct.FtpTask) (string, error) {
 		//开始部署zddi
 		for _, zddi_device := range task.ZddiDevices {
 			//开始安装
+			wg.Add(1)
 			go func(zddi_device Struct.ScpStruct) {
 				zddi_device.InstallZddi(zddi_file_name, build_file_name, task.DnsVersion, task.AddVersion, task.DhcpVersion, zddi_device.Role)
+				wg.Done()
 			}(zddi_device)
 		}
+		wg.Wait()
 		//开始添加节点
 		if task.Colony == true{
+			log.Println("start add zddi group")
 			if  deployment_info,deployment_err :=task.FtpStartCreateColony();deployment_err!= nil {
 				return deployment_info,deployment_err
 			}

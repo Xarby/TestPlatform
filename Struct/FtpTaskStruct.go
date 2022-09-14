@@ -22,7 +22,7 @@ type FtpTask struct {
 	ZddiPath    string      `json:"zddi_path"`
 	BuildPath   string      `json:"build_path"`
 	ZddiDevices []ScpStruct `json:"zddi_devices"`
-	Colony      bool        `json:"colony "`
+	Colony      bool        `json:"colony"`
 }
 
 func (ftp_task FtpTask) CheckFtpTask() (string, error) {
@@ -59,7 +59,6 @@ func (ftp_task FtpTask) CheckFtpTask() (string, error) {
 			return "colony model only one master role!", errors.New("colony model only master role! :")
 		}
 	}
-
 	url := ftp_task.Ftp.Ipaddr + ":" + ftp_task.Ftp.Port
 	ftp_client, conn_err := ftp.Dial(url, ftp.DialWithTimeout(5*time.Second))
 	if conn_err != nil {
@@ -93,27 +92,53 @@ func (ftp_task FtpTask) CheckFtpTask() (string, error) {
 func (ftp_task FtpTask) FtpStartCreateColony() (string, error) {
 	var master_ip string
 
-	//获取master的IP
+	//获取master的IP  并循环等待master的443端口开放 slave的4583端口开放
 	for _, scp_dev := range ftp_task.ZddiDevices {
-		for {
-			if conn_flag, conn_err := Util.TryConn(scp_dev.Ipaddr, 20120); conn_flag == true {
-				log.Println(conn_err)
-				break
-			}
-			time.Sleep(time.Second)
-		}
+		fmt.Println(scp_dev.Ipaddr)
+		var port int
 		if scp_dev.Role == "master" {
 			master_ip = scp_dev.Ipaddr
+			port = 443
+		} else {
+			if strings.Contains(ftp_task.BuildPath, "3.15") || strings.Contains(ftp_task.BuildPath, "3.16") || strings.Contains(ftp_task.BuildPath, "3.17") {
+				port = 4583
+			} else {
+				port = 20123
+			}
+		}
+		for {
+			if conn_flag, conn_err := Util.TryConn(scp_dev.Ipaddr, port); conn_flag == true {
+				break
+			} else {
+				log.Println(conn_err)
+				log.Println("sleep 1s")
+				time.Sleep(time.Second)
+			}
 		}
 	}
+	fmt.Println("all open port")
 
-	//遍历非master系欸但
+	fmt.Println(master_ip)
+	//编辑master的本机IP
+	time.Sleep(time.Second * 5)
+	if requestsErr := Util.PostRequests("PUT", fmt.Sprintf("https://%s:20120/groups/local/members/master", master_ip), []byte(fmt.Sprintf(`{
+											"group": "local",
+											"name": "master",
+											"id": "master",
+											"ip": "%s",
+											"positionX": "0.423",
+											"positionY": "0.406"
+										}`, master_ip))); requestsErr != nil {
+		log.Println("put master ip faile " + master_ip + requestsErr.Error())
+		return "put master ip faile " + master_ip, requestsErr
+	}
+	//遍历非master添加节点
 	for _, scp_dev := range ftp_task.ZddiDevices {
-		if scp_dev.Role == master_ip {
+		if scp_dev.Ipaddr == master_ip {
 			continue
 		} else {
 			//判断版本是否为3.15之后
-			name := scp_dev.Role + scp_dev.Ipaddr[strings.LastIndex(scp_dev.Ipaddr, "."):]
+			name := scp_dev.Role + scp_dev.Ipaddr[strings.LastIndex(scp_dev.Ipaddr, ".")+1:]
 			if strings.Contains(ftp_task.BuildPath, "3.15") || strings.Contains(ftp_task.BuildPath, "3.16") || strings.Contains(ftp_task.BuildPath, "3.17") {
 				body := []byte(fmt.Sprintf(`{
 					"name": "%s",
@@ -123,7 +148,7 @@ func (ftp_task FtpTask) FtpStartCreateColony() (string, error) {
 					"role": "%s",
 					"group": "local",
 					"is_extend":"no"}`, name, scp_dev.Ipaddr, scp_dev.Role))
-				if requestsErr := Util.PostRequests("POST",fmt.Sprintf("https://%s:20120/groups/local/members", master_ip), body); requestsErr != nil {
+				if requestsErr := Util.PostRequests("POST", fmt.Sprintf("https://%s:20120/groups/local/members", master_ip), body); requestsErr != nil {
 					return "add node" + scp_dev.Ipaddr + "role:" + scp_dev.Role + "fail", requestsErr
 				}
 			} else {
@@ -134,11 +159,10 @@ func (ftp_task FtpTask) FtpStartCreateColony() (string, error) {
 					"password": "admincns",
 					"role": "%s",
 					"group": "local"}`, name, scp_dev.Ipaddr, scp_dev.Role))
-				if requestsErr := Util.PostRequests("POST",fmt.Sprintf("https://%s:20120/groups/local/members", master_ip), body); requestsErr != nil {
+				if requestsErr := Util.PostRequests("POST", fmt.Sprintf("https://%s:20120/groups/local/members", master_ip), body); requestsErr != nil {
 					return "add node" + scp_dev.Ipaddr + "role:" + scp_dev.Role + "fail", requestsErr
 				}
 			}
-
 		}
 	}
 	return "add all node succ", nil

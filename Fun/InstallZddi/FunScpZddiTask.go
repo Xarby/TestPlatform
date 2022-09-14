@@ -33,8 +33,9 @@ func InstallScpZddiTask(task *Struct.ScpTask) (string,error) {
 				zddi_device.InstallZddi(zddi_file_name, build_file_name, task.DnsVersion, task.AddVersion, task.DhcpVersion, zddi_device.Role)
 				wg.Done()
 			}(zddi_device)
-			wg.Wait()
+
 		}
+		wg.Wait()
 		log.Println(task.Colony)
 		if task.Colony == true{
 			log.Println("start add zddi group")
@@ -43,6 +44,5 @@ func InstallScpZddiTask(task *Struct.ScpTask) (string,error) {
 			}
 		}
 	}
-
 	return check_info,check_err
 }

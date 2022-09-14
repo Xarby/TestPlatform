@@ -95,16 +95,47 @@ func check_task_role(scp_struct ScpStruct) (string, error) {
 	}
 }
 func (scp_task ScpTask) ScpStartCreateColony() (string, error) {
-	var master_ip string
 
-	//获取master的IP
+	var master_ip string
+	var count = 30
+	//编辑所有节点
 	for _, scp_dev := range scp_task.ZddiDevices {
+		fmt.Println(scp_dev.Ipaddr)
+		var port int
+		//得到master
 		if scp_dev.Role == "master" {
 			master_ip = scp_dev.Ipaddr
+			port = 443
+		} else {
+			if strings.Contains(scp_task.GetScpBuild.Path,"3.15")||strings.Contains(scp_task.GetScpBuild.Path,"3.16")||strings.Contains(scp_task.GetScpBuild.Path,"3.17"){
+				port = 4583
+			}else {
+				port = 20123
+			}
+		}
+		//判断节点是否开始服务
+		for {
+			if conn_flag, conn_err := Util.TryConn(scp_dev.Ipaddr, port); conn_flag == true {
+				break
+			} else {
+				count--
+				if count <0 {
+					log.Println(master_ip,errors.New("count exceed 30!"))
+					return master_ip,errors.New("count exceed 30!")
+				}
+				log.Println(conn_err)
+				log.Println("sleep 1s")
+				time.Sleep(time.Second)
+			}
 		}
 	}
+
+	//获取master的IP  并循环等待master的443端口开放 slave的4583端口开放
+	fmt.Println("all open port")
+
 	fmt.Println(master_ip)
-	//循环判断是否全部开启了20120端口
+	//编辑master的本机IP
+	time.Sleep(time.Second*5)
 	if requestsErr := Util.PostRequests("PUT", fmt.Sprintf("https://%s:20120/groups/local/members/master", master_ip), []byte(fmt.Sprintf(`{
 											"group": "local",
 											"name": "master",
@@ -113,31 +144,10 @@ func (scp_task ScpTask) ScpStartCreateColony() (string, error) {
 											"positionX": "0.423",
 											"positionY": "0.406"
 										}`, master_ip))); requestsErr != nil {
-		return "put master ip faile" + master_ip, requestsErr
+		log.Println("put master ip faile " + master_ip+requestsErr.Error())
+		return "put master ip faile " + master_ip, requestsErr
 	}
-	for _, scp_dev := range scp_task.ZddiDevices {
-		fmt.Println(scp_dev.Ipaddr)
-		var port int
-		if scp_dev.Role == "master" {
-			port = 20120
-		} else {
-			port = 20123
-		}
-		for {
-			if conn_flag, conn_err := Util.TryConn(scp_dev.Ipaddr, port); conn_flag == true {
-				break
-			} else {
-				fmt.Println(conn_err)
-				fmt.Println("sleep 1s")
-				time.Sleep(time.Second)
-			}
-		}
-		if scp_dev.Role == "master" {
-			master_ip = scp_dev.Ipaddr
-		}
-	}
-	fmt.Println("all open port")
-	//遍历非master系欸但
+	//遍历非master添加节点
 	for _, scp_dev := range scp_task.ZddiDevices {
 		if scp_dev.Ipaddr == master_ip {
 			continue
@@ -168,7 +178,6 @@ func (scp_task ScpTask) ScpStartCreateColony() (string, error) {
 					return "add node" + scp_dev.Ipaddr + "role:" + scp_dev.Role + "fail", requestsErr
 				}
 			}
-
 		}
 	}
 	return "add all node succ", nil
