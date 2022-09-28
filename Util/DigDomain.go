@@ -2,7 +2,7 @@ package Util
 
 import (
 	"fmt"
-	"log"
+	"github.com/sirupsen/logrus"
 	"os/exec"
 	"runtime"
 	"sort"
@@ -21,7 +21,7 @@ func DigDoamin(ipaddr string, domain string, domain_type string) ([]string) {
 	exec_result := bat_result(string(out))
 	sort.Strings(exec_result)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		return []string{err.Error()}
 	} else {
 		return exec_result

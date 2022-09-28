@@ -2,8 +2,8 @@ package Struct
 
 import (
 	"TestPlatform/Util"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
-	"log"
 	"strings"
 	"time"
 )
@@ -29,23 +29,23 @@ func (dev *SshStruct) Conn() (*ssh.Client, error){
 	config.Auth = []ssh.AuthMethod{ssh.Password(dev.Password)}
 	client, err := ssh.Dial("tcp", dev.Ipaddr+":"+dev.Port, config)
 	if err != nil {
-		log.Println("conn devices " + dev.Ipaddr + " err " + err.Error())
+		logrus.Error("conn devices " + dev.Ipaddr + " err " + err.Error())
 		return nil,err
 	} else {
-		log.Println("conn devices " + dev.Ipaddr + " succ")
+		logrus.Debug("conn devices " + dev.Ipaddr + " succ")
 	}
 	return client,nil
 }
 func (ssh_dev *SshStruct) Exec(client *ssh.Client,cmd string) (string, error) {
-	log.Println(ssh_dev.Ipaddr + " start exec cmd : " + cmd)
+	logrus.Info(ssh_dev.Ipaddr + " start exec cmd : " + cmd)
 	session, net_session_err := client.NewSession()
 	if net_session_err != nil {
 		return "",net_session_err
 	}
 	result_exec, exe_err := session.CombinedOutput(cmd)
 	if exe_err != nil {
-		log.Println(exe_err)
-		return "", exe_err
+		logrus.Error(ssh_dev.Ipaddr + " start exec cmd : " + cmd,exe_err)
+		return string(result_exec), exe_err
 	}
 	result := Util.SplitFormat(string(result_exec))
 	return result, exe_err
@@ -96,8 +96,3 @@ func (dev *SshStruct) GetDevInfo() (DevInfoStruct, error) {
 	dev_info.Status = "conn succ"
 	return dev_info, conn_err
 }
-
-
-
-
-

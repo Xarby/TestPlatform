@@ -1,14 +1,13 @@
 package Devices
 
-
 import (
-"TestPlatform/Const"
-"TestPlatform/Struct"
-"github.com/gin-gonic/gin"
-"gorm.io/driver/sqlite"
-"gorm.io/gorm"
-"log"
-"net/http"
+	"TestPlatform/Const"
+	"TestPlatform/Struct"
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"net/http"
 )
 
 func PutDevice(context *gin.Context) {
@@ -16,12 +15,12 @@ func PutDevice(context *gin.Context) {
 	succ_list := []map[string]string{}
 	fail_list := []map[string]string{}
 	if err := context.ShouldBind(&devs); err != nil {
-		log.Println(err)
+		logrus.Debug(err)
 		context.SecureJSON(http.StatusInternalServerError, err)
 	} else {
 		db, open_db_err := gorm.Open(sqlite.Open(Const.DevicesInfoRootSqlPath), &gorm.Config{})
 		if open_db_err!=nil {
-			log.Println("open db file", err)
+			logrus.Debug("open db file", err)
 		}
 		db.AutoMigrate(Struct.SshStruct{})
 		for _, v := range devs.Devices {

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -48,6 +48,6 @@ func PostRequests(method string,url string, body []byte) error {
 	}
 	defer response.Body.Close()
 	result_body, _ := ioutil.ReadAll(response.Body)
-	log.Println(string(result_body))
+	logrus.Info(string(result_body))
 	return nil
 }

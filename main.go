@@ -8,21 +8,22 @@ import (
 	"TestPlatform/Struct"
 	"TestPlatform/Util"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"log"
 )
 
 func main() {
-
-	Util.InitLog()
+	//初始化
+	Util.InitProgram()
 	db, open_db_err := gorm.Open(sqlite.Open(Const.DevicesInfoRootSqlPath), &gorm.Config{})
 	if open_db_err != nil {
-		log.Println("open db file", open_db_err)
+		logrus.Debug("open db file", open_db_err)
 		return
 	}
 	db.AutoMigrate(Struct.SshStruct{})
 	db.AutoMigrate(Struct.DevInfoStruct{})
+	logrus.Info("Server init  Succ ...")
 
 	r := gin.Default()
 	install_zddi := r.Group("/install_zddi")

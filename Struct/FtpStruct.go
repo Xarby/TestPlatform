@@ -4,8 +4,8 @@ import (
 	"TestPlatform/Const"
 	"TestPlatform/Util"
 	"github.com/jlaffaye/ftp"
+	"github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"os"
 	"time"
 )
@@ -17,34 +17,51 @@ type FtpStruct struct {
 	Password string `json:"password"`
 }
 
-func (ftpStruct *FtpStruct)GetFtpFile( ftpFilePath string) map[string]any {
+func (ftpStruct *FtpStruct)GetFtpFile( ftpFilePath string) (string,error) {
 
+	//ftp连接
 	url := ftpStruct.Ipaddr + ":" + ftpStruct.Port
 	ftp_client, conn_err := ftp.Dial(url, ftp.DialWithTimeout(5*time.Second))
 	if conn_err != nil {
-		return map[string]any{"result": false, "mes": "conn fail", "file_code": conn_err}
+		logrus.Error("conn ftp server succ !!"+ftpStruct.Ipaddr+" error:"+conn_err.Error())
+		return "conn ftp "+ftpStruct.Ipaddr,conn_err
+	}else {
+		logrus.Info("conn ftp server succ !!")
 	}
+	//ftp登录
 	if log_err := ftp_client.Login(ftpStruct.User, ftpStruct.Password); log_err != nil {
-		return map[string]any{"result": false, "mes": "login fail", "file_code": log_err}
+		return "login ftp "+ftpStruct.Ipaddr,conn_err
+	}else {
+		logrus.Info("login ftp server succ !!"+ftpStruct.Ipaddr)
 	}
+	//获取远端文件的流
 	remote_buf, buf_err := ftp_client.Retr(ftpFilePath)
 	defer remote_buf.Close()
 	if buf_err != nil {
-		log.Println(ftpFilePath)
-		return map[string]any{"result": false, "mes": "get file fail", "file_code": buf_err}
+		logrus.Error("get remote file "+ftpFilePath+" fail", " error:"+buf_err.Error())
+		return "get remote file "+ftpFilePath+" fail", buf_err
+	}else {
+		logrus.Info("get ftp file succ:"+ftpFilePath)
 	}
-	file_name := Util.GetFileName(ftpFilePath)
 
+	//本地创建一个文件并开流
+	file_name := Util.GetFileName(ftpFilePath)
 	outFile, out_file_err := os.Create(Const.ZddiFileMenuName + file_name)
 	defer outFile.Close()
 	if out_file_err != nil {
-		return map[string]any{"result": false, "mes": "new file" + Const.ZddiFileMenuName + file_name + "file", "file_code": out_file_err}
+		logrus.Error("open local file fail :"+Const.ZddiFileMenuName + file_name,"error :"+out_file_err.Error())
+		return "open local file fail :"+Const.ZddiFileMenuName + file_name, out_file_err
+	}else {
+		logrus.Info("open local file succ"+Const.ZddiFileMenuName + file_name)
 	}
-	log.Println("start get file")
+
+	//开始下载
+	logrus.Info("start get file")
 	if _,copy_err := io.Copy(outFile, remote_buf);copy_err != nil {
-		return map[string]any{"result": false, "mes": "write file fail", "file_code": copy_err}
+		logrus.Error("download file "+ftpFilePath+" fail","error :"+copy_err.Error())
+		return "download file "+ftpFilePath+" fail",copy_err
+	}else {
+		logrus.Info("downloca succ"+ftpFilePath)
 	}
-	result := map[string]any{"result": true, "mes": "get file"+ftpFilePath+" in local:"+Const.ZddiFileMenuName + file_name+" succ"}
-	log.Println(result)
-	return result
+	return "downloca succ"+ftpFilePath,nil
 }

@@ -4,9 +4,9 @@ import (
 	"TestPlatform/Const"
 	"TestPlatform/Struct"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"log"
 	"net/http"
 	"sync"
 )
@@ -17,7 +17,7 @@ func GetDeviceInfo(context *gin.Context) {
 	db.AutoMigrate(Struct.SshStruct{})
 	db.AutoMigrate(Struct.DevInfoStruct{})
 	if open_db_err!=nil {
-		log.Println("open db file", open_db_err)
+		logrus.Error("open db file", open_db_err)
 	}
 	//存放查询到的主机
 	ssh_list := []Struct.SshStruct{}
@@ -40,9 +40,9 @@ func GetDeviceInfo(context *gin.Context) {
 		wg.Add(1)
 		go func(sshStruct Struct.SshStruct) {
 			getInfo, get_err := sshStruct.GetDevInfo()
-			log.Println(getInfo)
+			logrus.Info(getInfo)
 			if get_err!=nil {
-				log.Println(get_err)
+				logrus.Error(get_err)
 			}
 			mutex.Lock()
 			dev_info_bat.BatchDevInfo= append(dev_info_bat.BatchDevInfo, getInfo)

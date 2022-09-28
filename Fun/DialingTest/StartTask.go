@@ -3,6 +3,7 @@ package DialingTest
 import (
 	"TestPlatform/Struct"
 	"TestPlatform/Util"
+	"github.com/sirupsen/logrus"
 	"log"
 	"reflect"
 	"sync"
@@ -42,7 +43,7 @@ func StartDoubleTask(task Struct.DialingTestTask) string {
 	wg := sync.WaitGroup{}
 	var mutex sync.Mutex
 	dig_result := Struct.DoubleDialingTestResult{}
-	log.Println("start double dialing mode ...")
+	logrus.Info("start double dialing mode ...")
 
 	for _, domainStruct := range task.BatchDomain {
 		wg.Add(1)
@@ -71,7 +72,7 @@ func StartDoubleTask(task Struct.DialingTestTask) string {
 		}(task, domainStruct)
 	}
 	wg.Wait()
-
+	logrus.Info("double dialing task execute end ...")
 	return dig_result.DoubleToExcel(task.Devices1,task.Devices2)
 	//返回json
 	//return dig_result
