@@ -3,8 +3,8 @@ package Devices
 import (
 	"TestPlatform/Const"
 	"TestPlatform/Struct"
+	"TestPlatform/Util"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"net/http"
@@ -12,6 +12,7 @@ import (
 )
 
 func GetDeviceInfo(context *gin.Context) {
+	logrus := Util.CreateLogger(Const.DevicesLogPath,Const.DevicesLogPath+ "/devices.log")
 	//打开连接数据库
 	db, open_db_err := gorm.Open(sqlite.Open(Const.DevicesInfoRootSqlPath), &gorm.Config{})
 	db.AutoMigrate(Struct.SshStruct{})

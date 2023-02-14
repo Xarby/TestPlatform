@@ -11,11 +11,15 @@
 *.rpm
 *.tar.gz
 *.log
+*.tar
+*.gz
+*.key
+*.file
 # Test binary, built with `go test -c`
 *.test
-
+*.info
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
+File/Private/tempLicense/*
 # Dependency directories (remove the comment below to include it)
 # vendor/

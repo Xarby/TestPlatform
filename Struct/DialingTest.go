@@ -30,7 +30,6 @@ type AlsoDialingTestStruct struct {
 //单机拨测的结果
 type AlsoDialingTestResult struct {
 	AlsoDialingTest []AlsoDialingTestStruct `json:"also_dialing_test"`
-	Path            string                  `json:"path"`
 }
 
 func (also_dialing_test *AlsoDialingTestResult) AlsoToExcel() string {
@@ -53,7 +52,6 @@ func (also_dialing_test *AlsoDialingTestResult) AlsoToExcel() string {
 	}
 	xlsx.SetColWidth("Sheet1", "A", "A", 40)
 	xlsx.SetColWidth("Sheet1", "C", "C", 40)
-	also_dialing_test.Path = file_name
 	return file_name
 }
 
@@ -64,7 +62,6 @@ type DoubleDialingTestStruct struct {
 	Devices1Result []string `json:"devices_1_result"`
 	Devices2Result []string `json:"devices_2_result"`
 	ContrastResult string   `json:"contrast_result"`
-	Path           string   `json:"path"`
 }
 
 type DoubleDialingTestResult struct {
@@ -92,6 +89,5 @@ func (double_dialing_test *DoubleDialingTestResult) DoubleToExcel(dev1_ipaddr st
 	}
 	xlsx.SetColWidth("Sheet1", "A", "A", 40)
 	xlsx.SetColWidth("Sheet1", "C", "D", 40)
-	double_dialing_test.Path = file_name
 	return file_name
 }

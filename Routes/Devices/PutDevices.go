@@ -3,14 +3,15 @@ package Devices
 import (
 	"TestPlatform/Const"
 	"TestPlatform/Struct"
+	"TestPlatform/Util"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"net/http"
 )
 
 func PutDevice(context *gin.Context) {
+	logrus := Util.CreateLogger(Const.DevicesLogPath,Const.DevicesLogPath+ "/devices.log")
 	devs := Struct.Devs{}
 	succ_list := []map[string]string{}
 	fail_list := []map[string]string{}

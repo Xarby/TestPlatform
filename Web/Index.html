@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form id="form1" method="post" action="">
+    DNS版本
+    <select name="dns_version">
+        <option value="0">v0</option>
+        <option value="1">v1</option>
+        <option value="2">v2</option>
+        <option value="3" selected>v3</option>
+    </select>
+    <br>
+    DHCP版本
+    <select name="dhcp_version">
+        <option value="0">v0</option>
+        <option value="1" selected>v1</option>
+    </select>
+    <br>
+    ADD版本
+    <select name="add_version">
+        <option value="0">v0</option>
+        <option value="1">v1</option>
+        <option value="2" selected>v2</option>
+    </select>
+    <br>
+
+    DDI版本
+    <select name="ddi_version">
+        <option value="3.10">DDI3.10</option>
+        <option value="3.11">DDI3.11</option>
+        <option value="3.12">DDI3.12</option>
+        <option value="3.13">DDI3.13</option>
+        <option value="3.14">DDI3.14</option>
+        <option value="3.15" selected>DDI3.15</option>
+    </select>
+    <br>
+    密码是否时变
+    <input type="radio" name="change_passwd" value="0" checked >不时变
+    <input type="radio" name="change_passwd" value="1">时变
+    <br>
+    选择machine.info文件
+    <input name="file" type="file" id="file" multiple>
+    <br>
+    <input type="submit" value="提交" onclick="submit_onclick();">
+</form>
+</body>
+
+</html>
+<script src="jquery-3.6.3.min.js"></script>
+
+<script src="jquery.base64.js"></script>
+<script type="text/javascript">
+
+    //表单转json
+    function getFormData($form) {
+        var unindexed_array = $form.serializeArray();
+        var indexed_array = {};
+
+        $.map(unindexed_array, function (n, i) {
+          indexed_array[n['name']] = n['value'];
+        });
+
+        return indexed_array;
+    }
+
+    //base转二进制流
+    function base64toBlob(dataurl) {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+    }
+
+    //提交按钮响应
+    function submit_onclick() {
+        let file = document.getElementById('file').files[0]
+        if (file == undefined) {
+            alert('未上传任何文件！');
+        }else if(file.name != "machine.info"){
+            alert("请上传'machine.info'格式文件");
+        }else if (file.size !=64) {
+            alert("文件不是为64字节的文件,实际字节数："+file.size);}
+        else{
+        let reader = new FileReader()
+        var jsonData = {};
+        reader.readAsDataURL(file)
+        reader.onload =  function() {
+        jsonData.bindata= this.result
+        jsonData.version =getFormData($("#form1"))
+
+        $.ajax({
+            url: "http://10.2.13.221:30120/license/upload_machine_license",
+            async:false,
+            type: "post",
+            responseType: "arraybuffer",
+            data:(JSON.stringify(jsonData)),
+            success: function (result) {
+                const blob = base64toBlob(result.EncodeStr_info);
+                const a = document.createElement("a");
+                const url = window.URL.createObjectURL(blob);
+                const filename = "license.tar.gz";
+                a.href = url;
+                a.download = filename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+            },error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        alert(XMLHttpRequest.status);
+                    }
+        })
+        }
+        }
+    }
+</script>

@@ -1,6 +1,7 @@
 package Util
 
 import (
+	"TestPlatform/Const"
 	"bytes"
 	"crypto/tls"
 	"fmt"
@@ -12,8 +13,9 @@ import (
 	"time"
 )
 
-func TryConn(ipaddr string, port int) (bool, error) {
-	conn, connerr := net.Dial("tcp", ipaddr+":"+strconv.Itoa(port))
+func TryConn(ipaddr string, port int,timeout int) (bool, error) {
+	dial := net.Dialer{Timeout: time.Second*time.Duration(timeout)}
+	conn, connerr := dial.Dial("tcp", ipaddr+":"+strconv.Itoa(port))
 	defer func() {
 		if conn != nil {
 			conn.Close()
@@ -26,10 +28,10 @@ func TryConn(ipaddr string, port int) (bool, error) {
 	}
 }
 
-func PostRequests(method string,url string, body []byte) error {
+func PostRequests(method string,url string, body []byte) (error,string) {
 
 	client := &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 20,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
@@ -37,17 +39,16 @@ func PostRequests(method string,url string, body []byte) error {
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 
 	if err != nil {
-		return fmt.Errorf("Got error %s", err.Error())
+		return fmt.Errorf("Got error %s", err.Error()),""
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth("admin", "admin")
-
+	req.SetBasicAuth(Const.ZddiApiDefaultUser, Const.ZddiApiDefaultPasswd)
 	response, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("Got error %s", err.Error())
+		return fmt.Errorf("Got error %s", err.Error()),""
 	}
 	defer response.Body.Close()
 	result_body, _ := ioutil.ReadAll(response.Body)
 	logrus.Info(string(result_body))
-	return nil
+	return nil,string(result_body)
 }

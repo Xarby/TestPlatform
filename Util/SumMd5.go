@@ -11,7 +11,7 @@ import (
 func GetFileMd5(filename string) (string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		logrus.Error("os file"+filename+" error")
+		logrus.Warning("open local file "+filename+" error")
 		return "", err
 	}
 	md5 := md5.New()

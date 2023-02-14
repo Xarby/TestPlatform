@@ -13,8 +13,9 @@ func ScpInstallZddi(context *gin.Context) {
 	if err := context.ShouldBind(&scp_task); err != nil {
 		logrus.Debug(err)
 		context.SecureJSON(http.StatusInternalServerError, err)
-	}else {
-		task_exe_info,_ := InstallZddi.InstallScpZddiTask(&scp_task)
-		context.JSON(http.StatusOK, map[string]interface{}{"exe_info":task_exe_info})
+	} else {
+		task_exe_info, _ := InstallZddi.InstallScpZddiTask(&scp_task)
+		context.JSON(http.StatusOK, map[string]interface{}{"exe_info": task_exe_info})
 	}
 }
+

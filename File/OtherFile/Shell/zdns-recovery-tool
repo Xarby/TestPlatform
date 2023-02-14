@@ -1,0 +1,43 @@
+#!/bin/bash
+option=$1
+function main()
+{
+	case "$option" in
+		"backup")
+			backup ;;
+		"recovery")
+			recovery ;;
+		*)
+			echo "【参数错误]: 请使用以下命令中的一个:"
+			echo "$(basename $0) backup"
+			echo "$(basename $0) recovery"
+			exit 0 ;;
+	esac
+}
+
+function backup()
+{
+echo " start backup ... "
+cd /
+fullbakpath=/zdns_backup
+logpath=$fullbakpath/run_log
+mkdir -p $fullbakpath
+mkdir -p $logpath
+/usr/bin/rsync -aAXvP --exclude={"/proc","/sys","/dev","/run","/tmp","/mnt","/media","/lost+found","$fullbakpath","$logpath"} / $fullbakpath &>"$logpath/sys_full_bak.log"
+}
+
+function recovery()
+{
+echo " start recovery ... "
+rm -rf /tmp/*
+cd /
+fullbakpath=/zdns_backup
+logpath=$fullbakpath/run_log
+mkdir -p $fullbakpath
+mkdir -p $logpath
+respath=$fullbakpath/   
+rsync -aAXvP --delete --exclude={"/proc","/sys","/dev","/run","/tmp","/mnt","/media","/lost+found","/zdns_backup/"} "/zdns_backup/" / &>"$logpath/sys_full_rec.log"
+reboot -f
+}
+main
+

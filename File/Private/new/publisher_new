@@ -1,0 +1,463 @@
+#!/usr/bin/env ruby 
+require 'optparse'
+require 'time'
+
+def self.extend_license_config 
+    [
+        {
+            "name"          => "license_start_time", #max_length should < 32
+            "short_option"  => "-s", 
+            "long_option"   => "--license_start_time", 
+            "option_expain" => "license start valid time", 
+            "max_length"    => "19", 
+            "value_range"   => "start_time", #help show the value range
+            "default_value" => Time.now.strftime("%Y-%m-%d 00:00:00"), 
+            "reg_validate_value" => "Time" #use Time.parse to validate the value
+        },
+
+        {
+            "name"          => "license_valid_days", #max_length should < 32
+            "short_option"  => "-D", 
+            "long_option"   => "--license_valid_days", 
+            "option_expain" => "license valid days", 
+            "max_length"    => "10", 
+            "value_range"   => "number_days", #help show the value range
+            "default_value" => "-1", 
+            "reg_validate_value" => "/^[-0-9]+$/" #use Time.parse to validate the value
+        },
+
+        {
+            "name"          => "license_remote_auth_flag", #max_length should < 32
+            "short_option"  => "-S", 
+            "long_option"   => "--license_remote_auth_flag", 
+            "option_expain" => "license use remote server to auth", 
+            "max_length"    => "1", 
+            "value_range"   => "remote_auth(0-1)", #help show the value range
+            "default_value" => "0", 
+            "reg_validate_value" => "/^[0|1]$/" #use Time.parse to validate the value
+        },
+
+        {
+            "name"          => "root_change_password_flag", #max_length should < 32
+            "short_option"  => "-m", 
+            "long_option"   => "--root_change_password", 
+            "option_expain" => "root change password every hour", 
+            "max_length"    => "10", 
+            "value_range"   => "root_change_password(0-1)",
+            "default_value" => "1",
+            "reg_validate_value" => "/^[0|1]$/"
+        },
+
+        {
+            "name"          => "device_type", #max_length should < 32
+            "short_option"  => "-M", 
+            "long_option"   => "--device_type", 
+            "option_expain" => "device is zdns or client device", 
+            "max_length"    => "10", 
+            "value_range"   => "device_type(0-2)",
+            "default_value" => "0", # 0: zdns device, 1: client device, 2:firewall device
+            "reg_validate_value" => "/^[0-2]$/"
+        },
+    ]
+end
+
+def self.restart_param
+    [
+        [
+            {
+                "name"          => "dns",
+                "short_option"  => "-N", 
+                "long_option"   => "--dns", 
+                "option_expain" => "DNS version", 
+                "max_length"    => "10", 
+                "value_range"   => "DNS(0,3)",
+                "default_value" => "0",
+                "value_prefix_name"   => "DNSv",
+                "reg_validate_value" => "/^DNSv[0|3]$/"
+            },
+
+            {
+                "name"          => "dhcp",
+                "short_option"  => "-H", 
+                "long_option"   => "--dhcp", 
+                "option_expain" => "dhcp version", 
+                "max_length"    => "10", 
+                "value_range"   => "DHCP(0-1)",
+                "default_value" => "0",
+                "value_prefix_name"   => "DHCPv",
+                "reg_validate_value" => "/^DHCPv[0|1]$/"
+            },
+
+            {
+                "name"          => "add",
+                "short_option"  => "-A", 
+                "long_option"   => "--add", 
+                "option_expain" => "add version", 
+                "max_length"    => "10", 
+                "value_range"   => "ADD(1-2)",
+                "default_value" => "1",
+                "value_prefix_name"   => "ADDv",
+                "reg_validate_value" => "/^ADDv[1|2]$/"
+            },
+
+        ],
+
+        {
+            "name"          => "qps_limit",
+            "short_option"  => "-Q", 
+            "long_option"   => "--qps", 
+            "option_expain" => "qps limit", 
+            "max_length"    => "10", 
+            "value_range"   => "qps",
+            "default_value" => "0",
+            "reg_validate_value" => "/^[0-9]*$/"
+        },
+        {
+            "name"          => "lps_limit",
+            "short_option"  => "-L", 
+            "long_option"   => "--lps", 
+            "option_expain" => "lps limit", 
+            "max_length"    => "10", 
+            "value_range"   => "lps",
+            "default_value" => "0",
+            "reg_validate_value" => "/^[0-9]*$/"
+        },
+
+    ]
+end
+
+def show_helper
+    print "usage:   publisher -c [release|patch|license|passwd] [-v&-d|-b&-e&-d&r|-p&-q&-i&-l&-Q&-L&-N&-H&-A&-R&-D&-S&-u&-m&-s&-M|-d&-o&-n| -h]\n"
+    print "--------\n"
+    print "example: publisher -c release -v v1r1 -d /root/zddi\n"
+    print "         publisher -c patch -b v1r1 -e v1r2 -d /root/zddi -r yes\n"
+
+    option = ""
+    extend_license_config.each do|license|
+        option += " #{license["short_option"]} #{license["value_range"]}"
+    end
+
+    old_rp = ""
+    rp = ""
+    restart_param.each do|param|
+        if param.is_a?(Array)
+            param.each do|p|
+                if p["name"] == "old_version_auth"
+                    old_rp = " #{p["short_option"]} #{p["value_range"]}"
+                else
+                    if rp.empty?
+                        rp = " #{p["short_option"]} #{p["value_range"]}"
+                    else
+                        rp += " #{p["short_option"]} #{p["value_range"]}"
+                    end
+                end
+            end
+        else
+            unless old_rp.empty?
+                old_rp += " #{param["short_option"]} #{param["value_range"]}"
+            end
+
+            if rp.empty?
+                rp = " #{param["short_option"]} #{param["value_range"]}"
+            else
+                rp += " #{param["short_option"]} #{param["value_range"]}"
+            end
+        end
+    end
+
+    unless old_rp.empty?
+        print "         publisher -c license -p /etc/pub.key -q /etc/pri.key -i /etc/machine.info -l /etc/license.file#{old_rp}\n"
+    end
+
+    print "         publisher -c license -p /etc/pub.key -q /etc/pri.key -i /etc/machine.info -l /etc/license.file#{rp}#{option}\n"
+
+
+    print "         publisher -c passwd -d /root/zddi -o old_passwd -n new_passwd\n"
+    exit 
+end
+
+def self.parse_extend_opt(opts, args, param, result)
+    opts.on(param["short_option"], param["long_option"], param["option_expain"]) do
+        value = args[0]
+        if value.to_s.length > param["max_length"].to_i
+            puts "#{value} length is exceed max length"
+            exit
+        end
+        if param["name"].to_s.length > 32
+            puts "#{param["name"]} is exceed 32 byte"
+            exit
+        end
+        result[param["name"].to_sym] = value.strip.chomp
+    end
+end
+
+def parse_opt(args)
+    options = {}
+    options[:lps_limit] = "0"
+    options[:qps_limit] = "0"
+    options[:version] = "3.9"
+    extend_options = {}
+    OptionParser.new do |opts|
+        opts.separator ""
+
+        opts.on("-c", "--control control", "ctl operation") do |c|
+            options[:control] = c
+        end 
+
+        opts.on("-d", "--dest destpro", "dest project dir") do |d|
+            options[:destpro] = d
+        end 
+
+        opts.on("-v", "--version info", "version info") do |v|
+            options[:version] = v
+        end 
+
+        opts.on("-b", "--begin version", "begin version") do |b|
+            options[:begin_version] = b
+        end 
+
+        opts.on("-e", "--end version", "end version") do |e|
+            options[:end_version] = e
+        end 
+
+        opts.on("-p", "--public key", "public key file") do |p|
+            options[:pub_key] = p
+        end 
+
+        opts.on("-q", "--private key", "private key file") do |q|
+            options[:pri_key] = q
+        end 
+
+        opts.on("-i", "--machine info", "machine info file") do |i|
+            options[:machine_info] = i
+        end 
+
+        opts.on("-l", "--license file", "license file") do |l|
+            options[:license] = l
+        end 
+        restart_param.each do|param|
+            if param.is_a?(Array) 
+                param.each do|p|
+                    parse_extend_opt(opts, args, p, options)
+                end
+            else
+                parse_extend_opt(opts, args, param, options)
+            end
+        end
+
+        opts.on("-r", "--release", "is release version") do |r|
+            options[:release] = r
+        end 
+
+        opts.on("-o", "--old passwd", "old password") do |o|
+            options[:oldpasswd] = o
+        end 
+
+        opts.on("-n", "--new passwd", "new password") do |n|
+            options[:newpasswd] = n
+        end 
+        
+        extend_license_config.each do|license|
+            parse_extend_opt(opts, args, license, extend_options)
+        end
+
+        opts.on("-h", "--help", "show help info") do
+            show_helper
+        end
+
+    end.parse!(args)
+    [options, extend_options]
+end
+
+def abs_path(path)
+    path.start_with?("/") ? path : File.join(Dir.getwd, path)
+end
+
+def handle_extend_flag(opt, extend_opt)
+    #set default value
+    extend_license_config.each do|c|
+        handle_param(c, extend_opt)
+    end 
+
+    config_str = ""
+    extend_license_config.each do|c|
+        if extend_opt.has_key?(c["name"].to_sym)
+            if config_str.empty?
+                config_str = "#{c["name"]}:#:#{extend_opt[c["name"].to_sym]}"
+            else
+                config_str += ";#{c["name"]}:#:#{extend_opt[c["name"].to_sym]}"
+            end
+        end
+    end
+    opt[:extend_license_config] = config_str
+end
+
+def handle_param(config_param, options)
+    #when key is not exist, set default value
+    name = config_param["name"].to_sym
+    unless options.has_key?(name)
+        options[name] = config_param["default_value"]
+    end
+
+    #when exist value prefix name, set it
+    if config_param.has_key?("value_prefix_name") && 
+        !options[name].include?(config_param["value_prefix_name"])
+        options[name] = "#{config_param["value_prefix_name"]}#{options[name]}"
+    end
+
+    rvv = "reg_validate_value"
+    unless config_param.has_key?(rvv) && !config_param[rvv].empty?
+        return options[name]
+    end
+
+    #validate the value 
+    if config_param[rvv].downcase == "Time".downcase
+        begin 
+            Time.parse(options[name])
+        rescue Exception => e
+            puts "#{config_param["name"]} value:#{options[name]} is error"
+            exit 
+        end
+    else
+        unless options[name] =~ eval(config_param[rvv])
+            puts "#{config_param["name"]} value #{config_param[rvv]} is error"
+            exit 
+        end
+    end 
+    return options[name]
+end
+
+def handle_restart_param(options)
+    rp = ""
+
+    unless options.has_key?(:version)
+        puts "No point license version, Please point it"
+        exit
+    end
+    #puts "Notice: Current license version:#{options[:version]}"
+
+    if options[:version] <= "3.2" 
+        if options.has_key?(:dns) && options.has_key?(:dhcp) &&
+            options[:dns].to_i > 0 && options[:dhcp].to_i > 0
+            rp = "DDI"
+        elsif options.has_key?(:dns) && options[:dns].to_i > 0
+            rp = "DNS"
+        elsif options.has_key?(:dhcp) && options[:dhcp].to_i > 0
+            rp = "DHCP"
+        else
+            puts "ERROR: No DNS or DHCP in license authority"
+            exit
+        end
+
+        if options.has_key?(:qps_limit)
+            qps_limit = options[:qps_limit].to_i
+            rp = rp.empty? ? "#{qps_limit}" : "#{rp} #{qps_limit}"
+        end
+        if options.has_key?(:lps_limit)
+            lps_limit = options[:lps_limit]
+            rp = rp.empty? ? "#{lps_limit}" : "#{rp} #{lps_limit}"
+        end
+
+        options[:restart_param] = rp
+        return
+    elsif options[:version] <= "3.5"
+        if options.has_key?(:dns) && options[:dns].to_i > 0
+            rp = rp.empty? ? "DNS" : "#{rp},DNS"
+        end
+        if options.has_key?(:dhcp) && options[:dhcp].to_i > 0
+            rp = rp.empty? ? "DHCP" : "#{rp},DHCP"
+        end
+        if rp.empty?
+            puts "ERROR: No DNS or DHCP in license authority"
+            exit
+        end
+
+        if options.has_key?(:qps_limit)
+            qps_limit = options[:qps_limit].to_i
+            rp = rp.empty? ? "#{qps_limit}" : "#{rp} #{qps_limit}"
+        end
+        if options.has_key?(:lps_limit)
+            lps_limit = options[:lps_limit]
+            rp = rp.empty? ? "#{lps_limit}" : "#{rp} #{lps_limit}"
+        end
+
+        options[:restart_param] = rp
+        return
+    end
+
+    restart_param.each do|param|
+        unit_rp = ""
+
+        if param.is_a?(Array)
+            param.each do|p|
+                next if p["name"] == "version"
+                if options.has_key?(p["name"].to_sym)
+                    tmp_param = handle_param(p, options)
+                    if unit_rp.empty?
+                        unit_rp = tmp_param
+                    else
+                        unit_rp += ",#{tmp_param}"
+                    end
+                end
+            end
+        else
+            if options.has_key?(param["name"].to_sym)
+                unit_rp = handle_param(param, options) 
+            end
+        end
+
+        if unit_rp.empty?
+            next
+        end
+
+        if rp.empty?
+            rp = unit_rp
+        else
+            rp += " #{unit_rp}"
+        end
+    end
+    options[:restart_param] = rp
+end
+
+opt, extend_opt = parse_opt(ARGV)
+show_helper unless opt[:control]
+case opt[:control]
+when "release"
+    show_helper unless (opt[:version] && opt[:destpro])
+    puts `release #{opt[:version]} #{abs_path(opt[:destpro])}`
+when "passwd"
+    show_helper unless (opt[:destpro] && opt[:oldpasswd] && opt[:newpasswd])
+    puts `change_passwd #{abs_path(opt[:destpro])} #{opt[:oldpasswd]} #{opt[:newpasswd]}`
+when "license"
+    show_helper unless (opt[:pub_key] && opt[:pri_key] && opt[:machine_info] && opt[:license])
+    if (opt[:qps_limit] && opt[:qps_limit].to_i < 0)
+        puts "qps limit should >= 0\n" 
+        exit
+    end
+    if (opt[:lps_limit] && opt[:lps_limit].to_i < 0)
+        puts "lps limit should >= 0\n" 
+        exit
+    end
+
+    [:dns, :dhcp, :add].each do |key|
+        break if opt[:version] == "3.2" || opt[:version] == "3.5"
+    end
+
+    #set default value and validate the value
+    handle_extend_flag(opt, extend_opt)
+
+    #set restart param
+    handle_restart_param(opt)
+
+    `license_new -p #{opt[:pub_key]} -q #{opt[:pri_key]} -i #{opt[:machine_info]} -l #{opt[:license]} -r "#{opt[:restart_param]}" -e "#{opt[:extend_license_config]}"`
+    if File.exist?(opt[:license])
+        if opt[:use_license] != 0
+            puts `send_license_to_server #{opt[:license]}`
+        end
+    else
+        puts "Generate license failed."
+    end
+when "patch"
+    show_helper unless (opt[:destpro] && opt[:begin_version] && opt[:end_version])
+    puts `create_patch #{opt[:begin_version]} #{opt[:end_version]} #{abs_path(opt[:destpro])} #{opt[:release] || "no"}`
+end

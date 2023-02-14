@@ -1,7 +1,6 @@
 package Util
 
 import (
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"os/exec"
 	"runtime"
@@ -9,14 +8,15 @@ import (
 	"strings"
 )
 
-func DigDoamin(ipaddr string, domain string, domain_type string) ([]string) {
+func DigDoamin(ipaddr string, domain string, domain_type string) []string {
 	var out []byte
 	var err error
 	if runtime.GOOS == "linux" {
-		fmt.Println("/usr/bin/dig"+"@"+ipaddr+ domain+ domain_type+ "+short")
+		//cmd := "dig @"+ipaddr+" "+domain+" "+domain_type+ " +short"
 		out, err = exec.Command("dig", "@"+ipaddr, domain, domain_type, "+short").Output()
+		//out, err = OsExecCmd(cmd)
 	} else if runtime.GOOS == "windows" {
-		out, err = exec.Command("cmd.exe","/c", "dig", "@"+ipaddr, domain, domain_type, "+short").Output()
+		out, err = exec.Command("cmd.exe", "/c", "dig", "@"+ipaddr, domain, domain_type, "+short").Output()
 	}
 	exec_result := bat_result(string(out))
 	sort.Strings(exec_result)
@@ -31,8 +31,8 @@ func DigDoamin(ipaddr string, domain string, domain_type string) ([]string) {
 func bat_result(domain string) []string {
 	var result []string
 	if domain != "" && len(domain) > 2 {
-		for _, v := range strings.Split(domain,"\n") {
-			result = append(result,strings.Replace(strings.Replace(v,"\n","",-1),"\t","",-1))
+		for _, v := range strings.Split(domain, "\n") {
+			result = append(result, strings.Replace(strings.Replace(v, "\n", "", -1), "\t", "", -1))
 		}
 		return result
 	} else {

@@ -10,7 +10,7 @@ import (
 
 
 type BatchSshStruct struct {
-	BatchSsh []SshStruct  `json:"batch_ssh"`
+	BatchSsh []SshStruct `json:"batch_ssh"`
 }
 
 type SshStruct struct {
@@ -44,11 +44,25 @@ func (ssh_dev *SshStruct) Exec(client *ssh.Client,cmd string) (string, error) {
 	}
 	result_exec, exe_err := session.CombinedOutput(cmd)
 	if exe_err != nil {
-		logrus.Error(ssh_dev.Ipaddr + " start exec cmd : " + cmd,exe_err)
+		logrus.Warning(ssh_dev.Ipaddr + " start exec cmd : " + cmd+" /error info:"+exe_err.Error())
 		return string(result_exec), exe_err
 	}
 	result := Util.SplitFormat(string(result_exec))
 	return result, exe_err
+}
+
+func (ssh_dev *SshStruct) Execute(client *ssh.Client,cmd string) (string, error) {
+	logrus.Info(ssh_dev.Ipaddr + " start exec cmd : " + cmd)
+	session, net_session_err := client.NewSession()
+	if net_session_err != nil {
+		return "",net_session_err
+	}
+	result_exec, exe_err := session.CombinedOutput(cmd)
+	if exe_err != nil {
+		logrus.Warning(ssh_dev.Ipaddr + " start exec cmd : " + cmd+" /error info:"+exe_err.Error())
+		return string(result_exec), exe_err
+	}
+	return string(result_exec), exe_err
 }
 
 func (dev *SshStruct) GetDevInfo() (DevInfoStruct, error) {
